@@ -1,4 +1,4 @@
-# GDScript Docs Maker
+# GDScript Docs Maker #
 
 ![Project banner](./assets/gdscript-docs-maker-banner.svg)
 
@@ -8,25 +8,25 @@ If you make plugins or a framework for Godot, GDScript Docs Maker will help you 
 
 It creates documents following Godot's built-in class reference. You can see an example with our [Godot Steering Toolkit documentation](https://www.gdquest.com/docs/godot-steering-toolkit/reference/)
 
-<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
 
+<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
 **Table of Contents**
 
 - [Installing](#installing)
 - [Getting Started](#getting-started)
-  - [Writing your code reference](#writing-your-code-reference)
-  - [Generating the markdown files](#generating-the-markdown-files)
+    - [Writing your code reference](#writing-your-code-reference)
+    - [Generating the markdown files](#generating-the-markdown-files)
 - [Hugo output](#hugo-output)
 - [The manual way](#the-manual-way)
-  - [Converting JSON](#converting-json)
+    - [Converting JSON](#converting-json)
 
 <!-- markdown-toc end -->
 
 **Note**: This program requires Godot 3.2+ and Python 3.7+ to work.
 
-## Installing
+## Installing ##
 
-You can install the GDScript Docs Maker python package with pip:
+You can install GDScript Docs Maker with pip:
 
 ```bash
 # On Linux and MacOS:
@@ -36,22 +36,18 @@ python3 -m pip install gdscript_docs_maker
 python -m pip install gdscript_docs_maker
 ```
 
-Although to use the shell script that simplifies creating the reference, `generate_reference`, you need to clone this repository. More on that below.
+## Getting Started ##
 
-## Getting Started
+In this section, we're showing you how to use the program to generate a code reference quickly.
 
-In this section, you will learn to use the program to generate a code reference quickly.
-
-This involves two steps. You need to:
+You need to:
 
 1. Write docstrings inside your GDScript code.
 2. Use one of the shell programs that ships with this add-on.
 
-### Writing your code reference
+### Writing your code reference ###
 
-Docstring or doc-comments in GDScript don't have any special markup.
-
-You can document classes, properties, and functions with comment blocks placed on the line before their definition:
+Document properties and functions with comment blocks placed on the line before their definition:
 
 ```gdscript
 # A linear and angular amount of acceleration.
@@ -70,47 +66,40 @@ func reset() -> void:
 	angular = 0.0
 ```
 
-If you need long docstrings, you can use multiple commented lines:
+Your docstrings can be as long as you want.
 
-```
-# A specialized steering agent that updates itself every frame so the user does
-# not have to using a KinematicBody2D
-# category: Specialized agents
-extends GSAISpecializedAgent
-class_name GSAIKinematicBody2DAgent
-```
+### Generating the markdown files ###
 
-### Generating the markdown files
-
-We wrote two shell scripts to automate the steps in generating a code reference: `./generate_reference` for Linux or MacOS, and `./generate_reference.bat` for Windows.
+We wrote two shell scripts to automate the steps in generating a code reference: `./generate_reference.sh` for Linux or MacOS, and `./generate_reference.bat` for Windows.
 
 Use either of them to quickly generate your code reference:
 
 ```bash
-Generate a code reference from GDScript
-Usage:
-generate_reference $project_directory [options]
+generate_reference.sh
 
-Required arguments:
+Generate a code reference from GDScript.
+
+Usage:
+
+generate_reference.sh $project_directory (optional)$output_directory
+
+Arguments:
 
 $project_directory -- path to your Godot project directory.
 This directory or one of its subdirectories should contain a
 project.godot file.
+$output_directory -- directory path to output the documentation into.
 
 Flags:
 
--h/--help             -- Display this help message.
--o/--output-directory -- directory path to output the documentation into.
+-h/--help -- Display this help message.
 ```
 
-To use them:
+You need `godot` to be available on the system PATH.
 
-- You need to clone this repository or download the source code from a [stable release](https://github.com/GDQuest/gdscript-docs-maker/releases).
-- You need `godot` to be available on the [system PATH variable](<https://en.wikipedia.org/wiki/PATH_(variable)>).
+## Hugo output ##
 
-## Hugo output
-
-You can output markdown files for [hugo](https://gohugo.io/), the static website engine.
+You can output markdown files for [hugo](https://gohugo.io/), the static website engine. 
 
 To do so, call GDScript docs maker with the `--format hugo` option. You can use two extra flags with this:
 
@@ -122,10 +111,10 @@ To do so, call GDScript docs maker with the `--format hugo` option. You can use 
 Here's how I generate the Godot Steering Toolkit's documentation. This command outputs the class reference straight into the website:
 
 ```bash
-python3 -m gdscript_docs_maker $HOME/Repositories/godot-steering-toolkit/project/reference.json --format hugo --author razoric --path $HOME/Repositories/website/content/docs/godot-steering-toolkit/reference/classes/
+python3 -m gdscript_docs_maker $HOME/Repositories/godot-steering-toolkit/project/reference.json --format hugo --author razoric --path $HOME/Repositories/website/content/docs/godot-steering-toolkit/reference/classes/ 
 ```
 
-## The manual way
+## The manual way ##
 
 If you want to generate the JSON and convert it manually, there are three steps involved:
 
@@ -134,10 +123,9 @@ If you want to generate the JSON and convert it manually, there are three steps 
 3. Running `gdscript_docs_maker` on the reference.json file that Godot generated in the previous step.
 
 <!-- TODO: turn into a note block on the website. -->
-
 **Note**: to parse and collect data from GDScript code, we rely on the GDScript language server that's new in Godot 3.2.
 
-### Converting JSON
+### Converting JSON ###
 
 Call the `gdscript-docs-maker` package directly using the `python -m` option:
 
@@ -164,3 +152,4 @@ The program takes a list of JSON files. For example, we generate the code refere
 ```fish
 python -m gdscript-docs-maker ~/Repositories/godot-steering-toolkit/src/reference.json
 ```
+

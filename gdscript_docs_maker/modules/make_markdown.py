@@ -2,7 +2,7 @@
 """
 import re
 from dataclasses import dataclass
-from typing import List, Any
+from typing import List
 
 
 @dataclass
@@ -51,7 +51,7 @@ def wrap_in_newlines(markdown: List[str] = []) -> List[str]:
 def make_heading(line: str, level: int = 1) -> List[str]:
     """Returns the line as a markdown heading, surrounded by two empty lines."""
     hashes = "#" * level
-    return ["", " ".join([hashes, escape_markdown(line)]), ""]
+    return ["", " ".join([hashes, escape_markdown(line), hashes]), ""]
 
 
 def escape_markdown(text: str) -> str:
@@ -84,18 +84,6 @@ def make_code_block(text: str, language: str = "gdscript") -> str:
 
 def make_link(description: str, target: str) -> str:
     return "[{}]({})".format(description, target)
-
-
-def make_list(
-    strings: List[str], is_numbered: bool = False, indent_level: int = 0
-) -> List[str]:
-    """Returns a bullet or ordered list from strings."""
-    indent: str = "  " * indent_level
-
-    def make_list_item(index: int, string: str) -> str:
-        return indent + "{} {}".format(index + "." if is_numbered else "-", string)
-
-    return [make_list_item(i, string) for i, string in enumerate(strings, start=1)]
 
 
 def make_table_header(cells: List[str]) -> List[str]:

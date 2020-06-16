@@ -9,7 +9,12 @@ from typing import List
 from . import hugo
 from .command_line import OutputFormats
 from .config import LOGGER
-from .gdscript_objects import Element, GDScriptClass, GDScriptClasses, ProjectInfo
+from .gdscript_objects import (
+    Element,
+    GDScriptClass,
+    GDScriptClasses,
+    ProjectInfo,
+)
 from .hugo import HugoFrontMatter
 from .make_markdown import (
     MarkdownDocument,
@@ -58,47 +63,33 @@ def _as_markdown(
         front_matter: HugoFrontMatter = HugoFrontMatter.from_data(gdscript, arguments)
         content += front_matter.as_string_list()
 
-    content += [
-        make_comment(
-            "Auto-generated from JSON by GDScript docs maker. "
-            "Do not edit this document directly."
-        )
-        + "\n"
-    ]
+    # content += [
+    #     make_comment(
+    #         "Auto-generated from JSON by GDScript docs maker. "
+    #         "Do not edit this document directly."
+    #     )
+    #     + "\n"
+    # ]
 
     if output_format == OutputFormats.MARDKOWN:
         content += [*make_heading(name, 1)]
     if gdscript.extends:
         extends_list: List[str] = gdscript.get_extends_tree(classes)
-        extends_links = [make_link(entry, "../" + entry) for entry in extends_list]
+        extends_links = [make_link(entry, entry) for entry in extends_list]
         content += [make_bold("Extends:") + " " + " < ".join(extends_links)]
-        description = _replace_references(classes, gdscript, gdscript.description)
-        content += [*MarkdownSection("Description", 2, [description]).as_text()]
+    description = _replace_references(classes, gdscript, gdscript.description)
+    content += [*MarkdownSection("Description", 2, [description]).as_text()]
 
-    content += _write_class(classes, gdscript, output_format, 2)
+    for attribute, title in [("members", "Properties"), ("functions", "Functions")]:
+        summary = _write_summary(gdscript, attribute)
+        if not summary:
+            continue
+        content += MarkdownSection(title, 2, summary).as_text()
+
     if gdscript.signals:
         content += MarkdownSection(
             "Signals", 2, _write_signals(classes, gdscript, output_format)
         ).as_text()
-
-    if gdscript.sub_classes:
-        content += make_heading("Sub-classes", 2)
-    for cls in gdscript.sub_classes:
-        content += _write_class(classes, cls, output_format, 3, True)
-
-    return MarkdownDocument(gdscript.name, content)
-
-
-def _write_class(
-    classes: GDScriptClasses,
-    gdscript: GDScriptClass,
-    output_format: OutputFormats,
-    heading_level: int,
-    is_inner_class: bool = False,
-) -> List[str]:
-    markdown: List[str] = []
-    if is_inner_class:
-        markdown += make_heading(gdscript.name, heading_level)
     for attribute, title in [
         ("enums", "Enumerations"),
         ("members", "Property Descriptions"),
@@ -106,12 +97,11 @@ def _write_class(
     ]:
         if not getattr(gdscript, attribute):
             continue
-        markdown += MarkdownSection(
-            title,
-            heading_level + 1 if is_inner_class else heading_level,
-            _write(attribute, classes, gdscript, output_format),
+        content += MarkdownSection(
+            title, 2, _write(attribute, classes, gdscript, output_format)
         ).as_text()
-    return markdown
+
+    return MarkdownDocument(gdscript.name, content)
 
 
 def _write_summary(gdscript: GDScriptClass, key: str) -> List[str]:
@@ -127,15 +117,17 @@ def _write(
     classes: GDScriptClasses,
     gdscript: GDScriptClass,
     output_format: OutputFormats,
-    heading_level: int = 3,
 ) -> List[str]:
     assert hasattr(gdscript, attribute)
 
     markdown: List[str] = []
     for element in getattr(gdscript, attribute):
         # assert element is Element
-        markdown.extend(make_heading(element.get_heading_as_string(), heading_level))
-        markdown.extend([make_code_block(element.signature), ""])
+        markdown.extend(make_heading(element.get_heading_as_string(), 3))
+        if output_format == OutputFormats.HUGO:
+            markdown.extend([hugo.highlight_code(element.signature), ""])
+        else:
+            markdown.extend([make_code_block(element.signature), ""])
         markdown.extend(element.get_unique_attributes_as_markdown())
         markdown.append("")
         description: str = _replace_references(classes, gdscript, element.description)
@@ -192,7 +184,7 @@ def _replace_references(
     classes: GDScriptClasses, gdscript: GDScriptClass, description: str
 ) -> str:
     """Finds and replaces references to other classes or methods in the
-    `description`."""
+`description`."""
     ERROR_MESSAGES = {
         "class": "Class {} not found in the class index.",
         "member": "Symbol {} not found in {}. The name might be incorrect.",
@@ -226,7 +218,7 @@ def _replace_references(
             )
             continue
 
-        display_text, path = "", "../"
+        display_text, path = "", ""
         if class_name:
             display_text, path = class_name, class_name
         if class_name and member:

@@ -13,7 +13,7 @@ class_name ReferenceCollector
 
 var Collector: SceneTree = load("Collector.gd").new()
 # A list of directories to collect files from.
-var directories := ["res://src"]
+var directories := ["res://addons/Rakugo"]
 # If true, explore each directory recursively
 var is_recursive: = true
 # A list of patterns to filter files.
@@ -26,5 +26,5 @@ func _run() -> void:
 	var files := PoolStringArray()
 	for dirpath in directories:
 		files.append_array(Collector.find_files(dirpath, patterns, is_recursive))
-	var json: String = Collector.print_pretty_json(Collector.get_reference(files))
+	var json := Collector.print_pretty_json(Collector.get_reference(files), true)
 	Collector.save_text(save_path, json)
