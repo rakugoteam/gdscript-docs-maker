@@ -2,13 +2,11 @@
 """
 import itertools
 import operator
-import re
 from dataclasses import dataclass
 from enum import Enum
 from typing import List, Tuple
 
-from .make_markdown import make_bold, make_code_inline, make_list, surround_with_html
-from .utils import build_re_pattern
+from .make_markdown import make_table_row, surround_with_html
 
 BUILTIN_VIRTUAL_CALLBACKS = [
     "_process",
@@ -54,20 +52,16 @@ Metadata should be of the form key: value, e.g. category: Category Name
 
     lines: List[str] = description.split("\n")
     description_trimmed: List[str] = []
-
-    pattern_tags = build_re_pattern("tags")
-    pattern_category = build_re_pattern("category")
-
-    for _, line in enumerate(lines):
+    for index, line in enumerate(lines):
         line_stripped: str = line.strip().lower()
 
-        match_tags = re.match(pattern_tags, line_stripped)
-        match_category = re.match(pattern_category, line_stripped)
-        if match_tags:
-            tags = match_tags.group(1).split(",")
+        if line_stripped.startswith("tags:"):
+            tags = line[line.find(":") + 1 :].split(",")
             tags = list(map(lambda t: t.strip(), tags))
-        elif match_category:
-            category = match_category.group(1)
+            continue
+        elif line_stripped.startswith("category:"):
+            category = line[line.find(":") + 1 :].strip()
+            continue
         else:
             description_trimmed.append(line.strip())
 
@@ -215,12 +209,11 @@ class Member(Element):
 
     def get_unique_attributes_as_markdown(self) -> List[str]:
         setget: List[str] = []
-        if self.setter:
-            setget.append(make_bold("Setter") + ": " + make_code_inline(self.setter))
-        if self.getter:
-            setget.append(make_bold("Getter") + ": " + make_code_inline(self.getter))
-        setget = make_list(setget)
-        if len(setget) > 0:
+        if self.setter or self.setter:
+            if self.setter:
+                setget.append(make_table_row(["Setter", self.setter]))
+            if self.getter:
+                setget.append(make_table_row(["Getter", self.getter]))
             setget.append("")
         return setget
 
@@ -248,7 +241,6 @@ class GDScriptClass:
     members: List[Member]
     signals: List[Signal]
     enums: List[Enumeration]
-    sub_classes: List["GDScriptClass"]
 
     def __post_init__(self):
         description, self.metadata = extract_metadata(self.description)
@@ -275,9 +267,7 @@ class GDScriptClass:
                 Enumeration.from_dict(entry)
                 for entry in data["constants"]
                 if entry["data_type"] == "Dictionary"
-                and not entry["name"].startswith("_")
             ],
-            [GDScriptClass.from_dict(data) for data in data["sub_classes"]],
         )
 
     def get_extends_tree(self, classes: "GDScriptClasses") -> List[str]:
