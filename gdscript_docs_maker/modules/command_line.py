@@ -6,14 +6,12 @@ from enum import Enum
 
 class OutputFormats(Enum):
     MARDKOWN = "markdown"
-    HUGO = "hugo"
+    JEKYLL = "jekyll"
 
 
 def _validate_output_format(args) -> OutputFormats:
     """Validates the format argument"""
     format: OutputFormats = OutputFormats.MARDKOWN
-    if args == "hugo":
-        format = OutputFormats.HUGO
     return format
 
 
@@ -44,25 +42,10 @@ def parse(args=sys.argv) -> Namespace:
         "--format",
         type=_validate_output_format,
         default=OutputFormats.MARDKOWN,
-        help="Output format for the markdown files. Either markdown (default) or hugo,"
-        " for the hugo static website generator.",
+        help="Output format for the markdown files.",
+        "markdown (default) or jekyll",
     )
-    parser.add_argument(
-        "-d",
-        "--date",
-        type=_set_date,
-        default=datetime.date.today(),
-        help="Date in ISO format: YYYY-MM-DD. Example: 2020-05-12 corresponds to"
-        "March 12, 2020. Only used for the hugo export format.",
-    )
-    parser.add_argument(
-        "-a",
-        "--author",
-        type=str,
-        default="",
-        help="ID of the author for hugo's front-matter. Only used for the hugo "
-        "export format.",
-    )
+
     parser.add_argument(
         "-i",
         "--make-index",
@@ -70,6 +53,7 @@ def parse(args=sys.argv) -> Namespace:
         default=False,
         help="If this flag is present, create an index.md page with a table of contents.",
     )
+
     parser.add_argument(
         "-v",
         "--verbose",
@@ -78,6 +62,7 @@ def parse(args=sys.argv) -> Namespace:
         help="Set the verbosity level. For example, -vv sets the verbosity level to 2."
         " Default: 0.",
     )
+
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -86,6 +71,7 @@ def parse(args=sys.argv) -> Namespace:
             " folders. For debugging purposes"
         ),
     )
+
     namespace: Namespace = parser.parse_args(args)
     namespace.verbose = 99999 if namespace.dry_run else namespace.verbose
     return namespace

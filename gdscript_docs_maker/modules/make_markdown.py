@@ -100,3 +100,7 @@ def make_comment(text: str) -> str:
 
 def surround_with_html(text: str, tag: str) -> str:
     return "<{}>{}</{}>".format(tag, text, tag)
+
+
+def jekyll(text: str) -> str:
+    return "---\n{}\n---".format(text)

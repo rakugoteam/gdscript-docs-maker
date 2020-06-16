@@ -14,7 +14,11 @@ var patterns := ["*.gd"]
 
 func _init() -> void:
 	var files := PoolStringArray()
-	for dirpath in directories:
-		files.append_array(Collector.find_files(dirpath, patterns, is_recursive))
-	var json: String = Collector.print_pretty_json(Collector.get_reference(files))
+
+	# for dirpath in directories:
+	# 	files.append_array(Collector.find_files(dirpath, patterns, is_recursive))
+
+	files.append_array(Collector.find_files(directories[0], patterns, is_recursive))
+
+	var json : String = Collector.print_pretty_json(Collector.get_reference(files, true, directories[0]))
 	Collector.save_text("res://reference.json", json)

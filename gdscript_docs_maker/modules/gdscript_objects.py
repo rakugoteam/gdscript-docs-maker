@@ -237,6 +237,7 @@ class GDScriptClass:
     extends: str
     description: str
     path: str
+    jekyll_path: str
     functions: List[Function]
     members: List[Member]
     signals: List[Signal]
@@ -259,6 +260,7 @@ class GDScriptClass:
             extends,
             data["description"],
             data["path"],
+            data["jekyll_path"],
             _get_functions(data["methods"])
             + _get_functions(data["static_functions"], is_static=True),
             _get_members(data["members"]),

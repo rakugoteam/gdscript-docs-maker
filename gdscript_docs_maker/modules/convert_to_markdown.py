@@ -6,7 +6,6 @@ import re
 from argparse import Namespace
 from typing import List
 
-from . import hugo
 from .command_line import OutputFormats
 from .config import LOGGER
 from .gdscript_objects import (
@@ -15,7 +14,7 @@ from .gdscript_objects import (
     GDScriptClasses,
     ProjectInfo,
 )
-from .hugo import HugoFrontMatter
+
 from .make_markdown import (
     MarkdownDocument,
     MarkdownSection,
@@ -28,6 +27,7 @@ from .make_markdown import (
     make_table_row,
     surround_with_html,
     wrap_in_newlines,
+    jekyll
 )
 
 
@@ -59,12 +59,12 @@ def _as_markdown(
     if "abstract" in gdscript.metadata.tags:
         name += " " + surround_with_html("(abstract)", "small")
 
-    if output_format == OutputFormats.HUGO:
-        front_matter: HugoFrontMatter = HugoFrontMatter.from_data(gdscript, arguments)
-        content += front_matter.as_string_list()
+    if output_format == OutputFormats.JEKYLL:
+        content += [jekyll("permalink: " + gdscript.jekyll_path)]
 
     if output_format == OutputFormats.MARDKOWN:
         content += [*make_heading(name, 1)]
+
     if gdscript.extends:
         extends_list: List[str] = gdscript.get_extends_tree(classes)
         extends_links = [make_link(entry, entry) for entry in extends_list]
@@ -116,10 +116,7 @@ def _write(
     for element in getattr(gdscript, attribute):
         # assert element is Element
         markdown.extend(make_heading(element.get_heading_as_string(), 3))
-        if output_format == OutputFormats.HUGO:
-            markdown.extend([hugo.highlight_code(element.signature), ""])
-        else:
-            markdown.extend([make_code_block(element.signature), ""])
+        markdown.extend([make_code_block(element.signature), ""])
         markdown.extend(element.get_unique_attributes_as_markdown())
         markdown.append("")
         description: str = _replace_references(classes, gdscript, element.description)

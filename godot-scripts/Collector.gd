@@ -23,6 +23,7 @@ func find_files(
 	if not directory.dir_exists(dirpath):
 		printerr("The directory does not exist: %s" % dirpath)
 		return file_paths
+
 	if not directory.open(dirpath) == OK:
 		printerr("Could not open the following dirpath: %s" % dirpath)
 		return file_paths
@@ -30,10 +31,12 @@ func find_files(
 	directory.list_dir_begin(true, do_skip_hidden)
 	var file_name := directory.get_next()
 	var subdirectories := PoolStringArray()
+
 	while file_name != "":
 		if directory.current_is_dir() and is_recursive:
 			var subdirectory := dirpath.plus_file(file_name)
 			file_paths.append_array(find_files(subdirectory, patterns, is_recursive))
+
 		else:
 			for pattern in patterns:
 				if file_name.match(pattern):
@@ -48,14 +51,17 @@ func find_files(
 func save_text(path := "", content := "") -> void:
 	var dirpath := path.get_base_dir()
 	var basename := path.get_file()
+
 	if not dirpath:
 		printerr("Couldn't save: the path %s is invalid." % path)
 		return
+
 	if not basename.is_valid_filename():
 		printerr("Couldn't save: the file name, %s, contains invalid characters." % basename)
 		return
 
 	var directory := Directory.new()
+
 	if not directory.dir_exists(dirpath):
 		directory.make_dir(dirpath)
 
@@ -71,21 +77,35 @@ func save_text(path := "", content := "") -> void:
 # code reference data.
 #
 # If `refresh_cache` is true, will refresh Godot's cache and get fresh symbols.
-func get_reference(files := PoolStringArray(), refresh_cache := false) -> Dictionary:
+func get_reference(files := PoolStringArray(), refresh_cache := false, path_prefix:="") -> Dictionary:
 	var data := {
 		name = ProjectSettings.get_setting("application/config/name"),
 		description = ProjectSettings.get_setting("application/config/description"),
 		version = ProjectSettings.get_setting("application/config/version"),
 		classes = []
 	}
+
 	var workspace = Engine.get_singleton('GDScriptLanguageProtocol').get_workspace()
+
 	for file in files:
 		if not file.ends_with(".gd"):
 			continue
+
+		var f = File.new()
+		f.open(file, File.READ)
+		var content = f.get_as_text()
+		f.close()
+
+		if not ("class_name" in content):
+			continue
+
 		if refresh_cache:
 			workspace.parse_local_script(file)
+
 		var symbols: Dictionary = workspace.generate_script_api(file)
+		symbols["jekyll_path"] = symbols.path.replace(path_prefix, "")
 		data["classes"].append(symbols)
+
 	return data
 
 
