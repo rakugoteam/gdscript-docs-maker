@@ -63,14 +63,6 @@ def _as_markdown(
         front_matter: HugoFrontMatter = HugoFrontMatter.from_data(gdscript, arguments)
         content += front_matter.as_string_list()
 
-    # content += [
-    #     make_comment(
-    #         "Auto-generated from JSON by GDScript docs maker. "
-    #         "Do not edit this document directly."
-    #     )
-    #     + "\n"
-    # ]
-
     if output_format == OutputFormats.MARDKOWN:
         content += [*make_heading(name, 1)]
     if gdscript.extends:
