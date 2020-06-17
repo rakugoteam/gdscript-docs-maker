@@ -56,11 +56,11 @@ Metadata should be of the form key: value, e.g. category: Category Name
         line_stripped: str = line.strip().lower()
 
         if line_stripped.startswith("tags:"):
-            tags = line[line.find(":") + 1 :].split(",")
+            tags = line[line.find(":") + 1:].split(",")
             tags = list(map(lambda t: t.strip(), tags))
             continue
         elif line_stripped.startswith("category:"):
-            category = line[line.find(":") + 1 :].strip()
+            category = line[line.find(":") + 1:].strip()
             continue
         else:
             description_trimmed.append(line.strip())
@@ -285,7 +285,8 @@ class GDScriptClass:
         extends_tree: List[str] = []
         while extends != "":
             extends_tree.append(extends)
-            extends = next((cls.extends for cls in classes if cls.name == extends), "")
+            extends = next(
+                (cls.extends for cls in classes if cls.name == extends), "")
         return extends_tree
 
 
@@ -319,7 +320,8 @@ attribute"""
     @staticmethod
     def from_dict_list(data: List[dict]):
         return GDScriptClasses(
-            [GDScriptClass.from_dict(entry) for entry in data if "name" in entry]
+            [GDScriptClass.from_dict(entry)
+             for entry in data if "name" in entry]
         )
 
 

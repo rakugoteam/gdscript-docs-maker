@@ -119,7 +119,8 @@ def _write(
         markdown.extend([make_code_block(element.signature), ""])
         markdown.extend(element.get_unique_attributes_as_markdown())
         markdown.append("")
-        description: str = _replace_references(classes, gdscript, element.description)
+        description: str = _replace_references(
+            classes, gdscript, element.description)
         markdown.append(description)
 
     return markdown
@@ -131,7 +132,8 @@ def _write_signals(
     return wrap_in_newlines(
         [
             "- {}: {}".format(
-                s.signature, _replace_references(classes, gdscript, s.description)
+                s.signature, _replace_references(
+                    classes, gdscript, s.description)
             )
             for s in gdscript.signals
         ]
@@ -139,10 +141,12 @@ def _write_signals(
 
 
 def _write_index_page(classes: GDScriptClasses, info: ProjectInfo) -> MarkdownDocument:
-    title: str = "{} ({})".format(info.name, surround_with_html(info.version, "small"))
+    title: str = "{} ({})".format(
+        info.name, surround_with_html(info.version, "small"))
     content: List[str] = [
         *MarkdownSection(title, 1, info.description).as_text(),
-        *MarkdownSection("Contents", 2, _write_table_of_contents(classes)).as_text(),
+        *MarkdownSection("Contents", 2,
+                         _write_table_of_contents(classes)).as_text(),
     ]
     return MarkdownDocument("index", content)
 
@@ -192,18 +196,21 @@ def _replace_references(
         class_name, member = match[1], match[2]
 
         if class_name and class_name not in classes.class_index:
-            LOGGER.warning(ERROR_MESSAGES["class"].format(class_name) + ERROR_TAIL)
+            LOGGER.warning(ERROR_MESSAGES["class"].format(
+                class_name) + ERROR_TAIL)
             continue
 
         if member and class_name:
             if member not in classes.class_index[class_name]:
                 LOGGER.warning(
-                    ERROR_MESSAGES["member"].format(member, class_name) + ERROR_TAIL
+                    ERROR_MESSAGES["member"].format(
+                        member, class_name) + ERROR_TAIL
                 )
                 continue
         elif member and member not in classes.class_index[gdscript.name]:
             LOGGER.warning(
-                ERROR_MESSAGES["member"].format(member, gdscript.name) + ERROR_TAIL
+                ERROR_MESSAGES["member"].format(
+                    member, gdscript.name) + ERROR_TAIL
             )
             continue
 
