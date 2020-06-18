@@ -77,7 +77,7 @@ func save_text(path := "", content := "") -> void:
 # code reference data.
 #
 # If `refresh_cache` is true, will refresh Godot's cache and get fresh symbols.
-func get_reference(files := PoolStringArray(), refresh_cache := false, path_prefix:="", pattern:="") -> Dictionary:
+func get_reference(files := PoolStringArray(), refresh_cache := false, path_prefix:="") -> Dictionary:
 	var data := {
 		name = ProjectSettings.get_setting("application/config/name"),
 		description = ProjectSettings.get_setting("application/config/description"),
@@ -91,20 +91,16 @@ func get_reference(files := PoolStringArray(), refresh_cache := false, path_pref
 		if not file.ends_with(".gd"):
 			continue
 
-		var f = File.new()
-		f.open(file, File.READ)
-		var content = f.get_as_text()
-		f.close()
-
-		if not ("class_name" in content):
-			continue
-
 		if refresh_cache:
 			workspace.parse_local_script(file)
 
 		var symbols: Dictionary = workspace.generate_script_api(file)
-		symbols["jekyll_path"] = symbols.path.replace(path_prefix, "")
-		symbols["jekyll_path"] = symbols["jekyll_path"].replace(pattern, "")
+		symbols["jekyll_path"] = file.get_basename ( ).trim_prefix(path_prefix)
+
+		if symbols["name"] == "":
+			var fixed_name = file.get_file ( ).get_basename ( )
+			symbols["name"] = fixed_name.capitalize ( ).replace(" ", "")
+
 		data["classes"].append(symbols)
 
 	return data

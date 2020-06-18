@@ -336,8 +336,10 @@ inclusion, and private methods."""
     functions: List[Function] = []
     for entry in data:
         name: str = entry["name"]
+
         if name in BUILTIN_VIRTUAL_CALLBACKS:
             continue
+            
         if name == TYPE_CONSTRUCTOR and not entry["arguments"]:
             continue
 

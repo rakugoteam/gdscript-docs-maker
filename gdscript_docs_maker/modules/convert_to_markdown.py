@@ -69,6 +69,7 @@ def _as_markdown(
         extends_list: List[str] = gdscript.get_extends_tree(classes)
         extends_links = [make_link(entry, entry) for entry in extends_list]
         content += [make_bold("Extends:") + " " + " < ".join(extends_links)]
+
     description = _replace_references(classes, gdscript, gdscript.description)
     content += [*MarkdownSection("Description", 2, [description]).as_text()]
 
@@ -82,6 +83,7 @@ def _as_markdown(
         content += MarkdownSection(
             "Signals", 2, _write_signals(classes, gdscript, output_format)
         ).as_text()
+
     for attribute, title in [
         ("enums", "Enumerations"),
         ("members", "Property Descriptions"),
@@ -89,6 +91,7 @@ def _as_markdown(
     ]:
         if not getattr(gdscript, attribute):
             continue
+
         content += MarkdownSection(
             title, 2, _write(attribute, classes, gdscript, output_format)
         ).as_text()
@@ -98,8 +101,10 @@ def _as_markdown(
 
 def _write_summary(gdscript: GDScriptClass, key: str) -> List[str]:
     element_list = getattr(gdscript, key)
+    
     if not element_list:
         return []
+
     markdown: List[str] = make_table_header(["Type", "Name"])
     return markdown + [make_table_row(item.summarize()) for item in element_list]
 

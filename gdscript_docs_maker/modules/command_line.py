@@ -42,8 +42,10 @@ def parse(args=sys.argv) -> Namespace:
         "--format",
         type=_validate_output_format,
         default=OutputFormats.MARDKOWN,
-        help="Output format for the markdown files.",
-        "markdown (default) or jekyll",
+        help=(
+            "Output format for the markdown files."
+            "markdown (default) or jekyll"
+        )
     )
 
     parser.add_argument(
