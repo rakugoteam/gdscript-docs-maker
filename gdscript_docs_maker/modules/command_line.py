@@ -12,6 +12,10 @@ class OutputFormats(Enum):
 def _validate_output_format(args) -> OutputFormats:
     """Validates the format argument"""
     format: OutputFormats = OutputFormats.MARDKOWN
+
+    if args == "jekyll":
+        format = OutputFormats.JEKYLL
+        
     return format
 
 

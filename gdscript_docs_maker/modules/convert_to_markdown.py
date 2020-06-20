@@ -27,7 +27,8 @@ from .make_markdown import (
     make_table_row,
     surround_with_html,
     wrap_in_newlines,
-    jekyll
+    jekyll,
+    dark_mode_button
 )
 
 
@@ -40,11 +41,60 @@ def convert_to_markdown(
     """
     markdown: List[MarkdownDocument] = []
     if arguments.make_index:
-        markdown.append(_write_index_page(classes, info))
+        output_format: OutputFormats = arguments.format
+        if output_format != OutputFormats.JEKYLL:
+            markdown.append(_write_index_page(classes, info)) # don't work
+
+    index_dict = {}
     for entry in classes:
         markdown.append(_as_markdown(classes, entry, arguments))
+        _add_index_dict(index_dict, entry, arguments)
+
+    index_content: List[str] = [
+        jekyll([
+            "title: API",
+            "permalink: api",
+            "nav_order: 1"
+        ])
+    ]
+
+    for parent in index_dict:
+        content: List[str] = []
+
+        content += [jekyll([
+                "title: {}".format(parent.title()),
+                "permalink: {}".format(parent),
+                "grand_parent: api",
+                "nav_order: 2"
+            ])
+        ]
+
+        for pair in index_dict[parent]:
+            for key, value in pair.items():
+                content += ["- " + make_link(key, value)]
+
+        index_content += ["- " + make_link(parent.title(), parent)]
+        markdown.append(MarkdownDocument(parent, content))
+
+    markdown.append(MarkdownDocument("index", index_content))
+
     return markdown
 
+def jekyll_parent(jekyll_path:str) -> str:
+    return jekyll_path.split("/")[1]
+
+def _add_index_dict(index_dict: dict, gdscript: GDScriptClass, arguments):
+    output_format: OutputFormats = arguments.format
+    if output_format == OutputFormats.JEKYLL and arguments.make_index:
+        parent = jekyll_parent(gdscript.jekyll_path)
+        pair = {parent:[]}
+
+        if not( parent in index_dict):
+            pair[parent].append({gdscript.name: gdscript.jekyll_path})
+            index_dict.update(pair)
+
+        else:
+            index_dict[parent].append({gdscript.name: gdscript.jekyll_path})
 
 def _as_markdown(
     classes: GDScriptClasses, gdscript: GDScriptClass, arguments: Namespace
@@ -60,7 +110,12 @@ def _as_markdown(
         name += " " + surround_with_html("(abstract)", "small")
 
     if output_format == OutputFormats.JEKYLL:
-        content += [jekyll("permalink: " + gdscript.jekyll_path)]
+        content += [jekyll([
+            "title: {}".format(gdscript.name),
+            "permalink: api/{}".format(gdscript.jekyll_path),
+            "parent: {}".format(jekyll_parent(gdscript.jekyll_path)),
+            "grand_parent: api"
+        ])]
 
     if output_format == OutputFormats.MARDKOWN:
         content += [*make_heading(name, 1)]
@@ -101,7 +156,7 @@ def _as_markdown(
 
 def _write_summary(gdscript: GDScriptClass, key: str) -> List[str]:
     element_list = getattr(gdscript, key)
-    
+
     if not element_list:
         return []
 
