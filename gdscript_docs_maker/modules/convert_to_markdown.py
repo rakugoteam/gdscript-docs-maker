@@ -54,7 +54,9 @@ def convert_to_markdown(
         jekyll([
             "title: API",
             "permalink: api",
-            "nav_order: 1"
+            "nav_order: 1",
+            "has_children: true",
+            "has_toc: true"
         ])
     ]
 
@@ -64,16 +66,12 @@ def convert_to_markdown(
         content += [jekyll([
                 "title: {}".format(parent.title()),
                 "permalink: {}".format(parent),
-                "grand_parent: api",
-                "nav_order: 2"
+                "parent: API",
+                "has_children: true",
+                "has_toc: true"
             ])
         ]
-
-        for pair in index_dict[parent]:
-            for key, value in pair.items():
-                content += ["- " + make_link(key, value)]
-
-        index_content += ["- " + make_link(parent.title(), parent)]
+        
         markdown.append(MarkdownDocument(parent, content))
 
     markdown.append(MarkdownDocument("index", index_content))
@@ -110,11 +108,19 @@ def _as_markdown(
         name += " " + surround_with_html("(abstract)", "small")
 
     if output_format == OutputFormats.JEKYLL:
+        parent = jekyll_parent(gdscript.jekyll_path)
+
+        if parent == "gui":
+            parent = "GUI"
+
+        else:
+            parent = parent.title()
+
         content += [jekyll([
             "title: {}".format(gdscript.name),
-            "permalink: api/{}".format(gdscript.jekyll_path),
-            "parent: {}".format(jekyll_parent(gdscript.jekyll_path)),
-            "grand_parent: api"
+            "permalink: {}".format(gdscript.jekyll_path),
+            "parent: {}".format(parent),
+            "grand_parent: API"
         ])]
 
     if output_format == OutputFormats.MARDKOWN:
