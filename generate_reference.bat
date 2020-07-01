@@ -1,8 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
 
-::Generates a reference.json file using the CLI script and godot, and runs 
-::the python module on it to create markdown/hugo markdown.
+::Generates a reference.json file using the CLI script and godot, and runs
+::the python module on it to create markdown.
 
 ::Test for godot
 where /q godot*
@@ -57,7 +57,7 @@ goto tail
 echo.
 echo Creates and parses reference documentation for a GDScript based projects.
 echo.
-echo generate_reference path\to\godot\project [-p dest] [-f markdown ^| hugo]
+echo generate_reference path\to\godot\project [-p dest] [-f markdown]
 echo      [-d YYYY-MM-DD] [-a id] [-v ^| -vv] [--dry-run] [-i]
 echo.
 echo   -p
@@ -65,15 +65,7 @@ echo   --path dest   Path to the output directory.
 echo.
 echo   -f
 echo   --format      Output format for the markdown files. Either markdown (default)
-echo                 or hugo for the hugo static website generator.
-echo.
-echo   -d
-echo   --date        Date in ISO format: YYYY-MM-DD. Example: 2020-05-12 corresponds
-echo                 to March 12, 2020. Only used for the hugo export format.
-echo.
-echo   -a
-echo   --author      ID of the author for hugo's front-matter. Only used for the
-echo                 hugo export format.
+echo								 or jekyll.
 echo.
 echo   -v
 echo   --verbose     Set the verbosity level. For example, -vv sets the verbosity
@@ -167,73 +159,73 @@ goto end
    if %~1 == --author     goto parameterized
    if %~1 == -f           goto parameterized
    if %~1 == --format     goto parameterized
-   
+
    if %~1 == -i           goto flags
    if %~1 == --make-index goto flags
    if %~1 == --dry-run    goto flags
    if %~1 == -v           goto flags
    if %~1 == -vv          goto flags
    if %~1 == --verbose    goto flags
-   
+
    ::Parameter for parameterized argument
    if %param_arg% == 0 (
       echo Invalid parameter %1.
       goto sub_error
    )
    set param_arg=0
-   
+
    if !parameters[%param_n%].option! == -p set output_path=%~f1
    if !parameters[%param_n%].option! == --path set output_path=%~f1
-   
+
    set parameters[!param_n!].param=%~1
    set /A param_n+=1
    goto sub_end
-   
+
    ::Set up to receive parameter
    :parameterized
    if %param_arg% == 1    goto sub_error
-   
+
    set parsed=%~1
    if %parsed% == --path set parsed=-p
    if %parsed% == --date set parsed=-d
    if %parsed% == --author set parsed=-a
    if %parsed% == --format set parsed=-f
-   
+
    for /l %%n in (0,1,%param_n%) do (
       if !parameters[%%n].option! == %parsed% (
 	     echo Duplicate option %parsed%
 	     goto sub_error
 	  )
    )
-   
+
    set parameters[!param_n!].option=%parsed%
    set param_arg=1
    goto sub_end
-   
+
    :flags
    if %param_arg% == 1 (
       echo Incomplete parameter before %1 flag.
       goto sub_error
    )
-   
+
    set parsed=%1
-   
+
    if %parsed% == --make-index set parsed=-i
-   
+
    for /l %%n in (0,1,%param_n%) do (
       if !flags[%%n]! == %parsed% (
 	     echo Duplicate flag %parsed%.
 	     goto sub_error
 	  )
    )
-   
+
    set flags[!flag_n!]=%parsed%
    set /A flag_n+=1
    goto sub_end
-   
+
    :sub_error
    exit /b 1
-   
+
    :sub_end
    exit /b 0
 

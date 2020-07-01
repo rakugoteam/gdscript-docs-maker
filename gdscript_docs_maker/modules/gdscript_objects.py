@@ -1,4 +1,5 @@
-"""Converts the json representation of GDScript classes as dictionaries into objects
+"""
+Converts the json representation of GDScript classes as dictionaries into objects
 """
 import itertools
 import operator
@@ -56,11 +57,11 @@ Metadata should be of the form key: value, e.g. category: Category Name
         line_stripped: str = line.strip().lower()
 
         if line_stripped.startswith("tags:"):
-            tags = line[line.find(":") + 1 :].split(",")
+            tags = line[line.find(":") + 1:].split(",")
             tags = list(map(lambda t: t.strip(), tags))
             continue
         elif line_stripped.startswith("category:"):
-            category = line[line.find(":") + 1 :].strip()
+            category = line[line.find(":") + 1:].strip()
             continue
         else:
             description_trimmed.append(line.strip())
@@ -237,6 +238,7 @@ class GDScriptClass:
     extends: str
     description: str
     path: str
+    jekyll_path: str
     functions: List[Function]
     members: List[Member]
     signals: List[Signal]
@@ -259,6 +261,7 @@ class GDScriptClass:
             extends,
             data["description"],
             data["path"],
+            data["jekyll_path"],
             _get_functions(data["methods"])
             + _get_functions(data["static_functions"], is_static=True),
             _get_members(data["members"]),
@@ -283,7 +286,8 @@ class GDScriptClass:
         extends_tree: List[str] = []
         while extends != "":
             extends_tree.append(extends)
-            extends = next((cls.extends for cls in classes if cls.name == extends), "")
+            extends = next(
+                (cls.extends for cls in classes if cls.name == extends), "")
         return extends_tree
 
 
@@ -317,7 +321,8 @@ attribute"""
     @staticmethod
     def from_dict_list(data: List[dict]):
         return GDScriptClasses(
-            [GDScriptClass.from_dict(entry) for entry in data if "name" in entry]
+            [GDScriptClass.from_dict(entry)
+             for entry in data if "name" in entry]
         )
 
 
@@ -332,8 +337,10 @@ inclusion, and private methods."""
     functions: List[Function] = []
     for entry in data:
         name: str = entry["name"]
+
         if name in BUILTIN_VIRTUAL_CALLBACKS:
             continue
+
         if name == TYPE_CONSTRUCTOR and not entry["arguments"]:
             continue
 

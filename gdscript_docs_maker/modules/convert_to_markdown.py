@@ -6,7 +6,6 @@ import re
 from argparse import Namespace
 from typing import List
 
-from . import hugo
 from .command_line import OutputFormats
 from .config import LOGGER
 from .gdscript_objects import (
@@ -15,7 +14,7 @@ from .gdscript_objects import (
     GDScriptClasses,
     ProjectInfo,
 )
-from .hugo import HugoFrontMatter
+
 from .make_markdown import (
     MarkdownDocument,
     MarkdownSection,
@@ -28,6 +27,8 @@ from .make_markdown import (
     make_table_row,
     surround_with_html,
     wrap_in_newlines,
+    jekyll,
+    dark_mode_button
 )
 
 
@@ -40,11 +41,46 @@ def convert_to_markdown(
     """
     markdown: List[MarkdownDocument] = []
     if arguments.make_index:
-        markdown.append(_write_index_page(classes, info))
+        output_format: OutputFormats = arguments.format
+        if output_format != OutputFormats.JEKYLL:
+            markdown.append(_write_index_page(classes, info)) # don't work
+
+    index_dict = {}
     for entry in classes:
         markdown.append(_as_markdown(classes, entry, arguments))
+        _add_index_dict(index_dict, entry, arguments)
+
+    for parent in index_dict:
+        content: List[str] = []
+
+        content += [jekyll([
+                "title: {}".format(parent.title()),
+                "permalink: {}".format(parent),
+                "nav_order: 1",
+                "has_children: true",
+                "has_toc: true"
+            ])
+        ]
+
+        markdown.append(MarkdownDocument(parent, content))
+
     return markdown
 
+def jekyll_parent(jekyll_path:str) -> str:
+    return jekyll_path.split("/")[1]
+
+def _add_index_dict(index_dict: dict, gdscript: GDScriptClass, arguments):
+    output_format: OutputFormats = arguments.format
+    if output_format == OutputFormats.JEKYLL and arguments.make_index:
+        parent = jekyll_parent(gdscript.jekyll_path)
+        pair = {parent:[]}
+
+        if not( parent in index_dict):
+            pair[parent].append({gdscript.name: gdscript.jekyll_path})
+            index_dict.update(pair)
+
+        else:
+            index_dict[parent].append({gdscript.name: gdscript.jekyll_path})
 
 def _as_markdown(
     classes: GDScriptClasses, gdscript: GDScriptClass, arguments: Namespace
@@ -59,16 +95,29 @@ def _as_markdown(
     if "abstract" in gdscript.metadata.tags:
         name += " " + surround_with_html("(abstract)", "small")
 
-    if output_format == OutputFormats.HUGO:
-        front_matter: HugoFrontMatter = HugoFrontMatter.from_data(gdscript, arguments)
-        content += front_matter.as_string_list()
+    if output_format == OutputFormats.JEKYLL:
+        parent = jekyll_parent(gdscript.jekyll_path)
+
+        if parent == "gui":
+            parent = "GUI"
+
+        else:
+            parent = parent.title()
+
+        content += [jekyll([
+            "title: {}".format(gdscript.name),
+            "permalink: {}".format(gdscript.jekyll_path),
+            "parent: {}".format(parent),
+        ])]
 
     if output_format == OutputFormats.MARDKOWN:
         content += [*make_heading(name, 1)]
+
     if gdscript.extends:
         extends_list: List[str] = gdscript.get_extends_tree(classes)
         extends_links = [make_link(entry, entry) for entry in extends_list]
         content += [make_bold("Extends:") + " " + " < ".join(extends_links)]
+
     description = _replace_references(classes, gdscript, gdscript.description)
     content += [*MarkdownSection("Description", 2, [description]).as_text()]
 
@@ -82,6 +131,7 @@ def _as_markdown(
         content += MarkdownSection(
             "Signals", 2, _write_signals(classes, gdscript, output_format)
         ).as_text()
+
     for attribute, title in [
         ("enums", "Enumerations"),
         ("members", "Property Descriptions"),
@@ -89,6 +139,7 @@ def _as_markdown(
     ]:
         if not getattr(gdscript, attribute):
             continue
+
         content += MarkdownSection(
             title, 2, _write(attribute, classes, gdscript, output_format)
         ).as_text()
@@ -98,8 +149,10 @@ def _as_markdown(
 
 def _write_summary(gdscript: GDScriptClass, key: str) -> List[str]:
     element_list = getattr(gdscript, key)
+
     if not element_list:
         return []
+
     markdown: List[str] = make_table_header(["Type", "Name"])
     return markdown + [make_table_row(item.summarize()) for item in element_list]
 
@@ -116,13 +169,11 @@ def _write(
     for element in getattr(gdscript, attribute):
         # assert element is Element
         markdown.extend(make_heading(element.get_heading_as_string(), 3))
-        if output_format == OutputFormats.HUGO:
-            markdown.extend([hugo.highlight_code(element.signature), ""])
-        else:
-            markdown.extend([make_code_block(element.signature), ""])
+        markdown.extend([make_code_block(element.signature), ""])
         markdown.extend(element.get_unique_attributes_as_markdown())
         markdown.append("")
-        description: str = _replace_references(classes, gdscript, element.description)
+        description: str = _replace_references(
+            classes, gdscript, element.description)
         markdown.append(description)
 
     return markdown
@@ -134,7 +185,8 @@ def _write_signals(
     return wrap_in_newlines(
         [
             "- {}: {}".format(
-                s.signature, _replace_references(classes, gdscript, s.description)
+                s.signature, _replace_references(
+                    classes, gdscript, s.description)
             )
             for s in gdscript.signals
         ]
@@ -142,10 +194,12 @@ def _write_signals(
 
 
 def _write_index_page(classes: GDScriptClasses, info: ProjectInfo) -> MarkdownDocument:
-    title: str = "{} ({})".format(info.name, surround_with_html(info.version, "small"))
+    title: str = "{} ({})".format(
+        info.name, surround_with_html(info.version, "small"))
     content: List[str] = [
         *MarkdownSection(title, 1, info.description).as_text(),
-        *MarkdownSection("Contents", 2, _write_table_of_contents(classes)).as_text(),
+        *MarkdownSection("Contents", 2,
+                         _write_table_of_contents(classes)).as_text(),
     ]
     return MarkdownDocument("index", content)
 
@@ -195,18 +249,21 @@ def _replace_references(
         class_name, member = match[1], match[2]
 
         if class_name and class_name not in classes.class_index:
-            LOGGER.warning(ERROR_MESSAGES["class"].format(class_name) + ERROR_TAIL)
+            LOGGER.warning(ERROR_MESSAGES["class"].format(
+                class_name) + ERROR_TAIL)
             continue
 
         if member and class_name:
             if member not in classes.class_index[class_name]:
                 LOGGER.warning(
-                    ERROR_MESSAGES["member"].format(member, class_name) + ERROR_TAIL
+                    ERROR_MESSAGES["member"].format(
+                        member, class_name) + ERROR_TAIL
                 )
                 continue
         elif member and member not in classes.class_index[gdscript.name]:
             LOGGER.warning(
-                ERROR_MESSAGES["member"].format(member, gdscript.name) + ERROR_TAIL
+                ERROR_MESSAGES["member"].format(
+                    member, gdscript.name) + ERROR_TAIL
             )
             continue
 

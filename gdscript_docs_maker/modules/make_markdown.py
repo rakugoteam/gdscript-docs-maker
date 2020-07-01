@@ -100,3 +100,17 @@ def make_comment(text: str) -> str:
 
 def surround_with_html(text: str, tag: str) -> str:
     return "<{}>{}</{}>".format(tag, text, tag)
+
+
+def jekyll(args: List[str]) -> str:
+    text = ""
+
+    for a in args:
+        text += "{}\n".format(a)
+
+    return "---\n{}---".format(text)
+
+def dark_mode_button() -> str:
+    return """
+    <script type="text/javascript" src="{{ "/assets/js/dark-mode-preview.js" | absolute_url }}"></script>
+    """
