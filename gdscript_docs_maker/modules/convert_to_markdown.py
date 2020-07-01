@@ -50,31 +50,19 @@ def convert_to_markdown(
         markdown.append(_as_markdown(classes, entry, arguments))
         _add_index_dict(index_dict, entry, arguments)
 
-    index_content: List[str] = [
-        jekyll([
-            "title: API",
-            "permalink: api",
-            "nav_order: 1",
-            "has_children: true",
-            "has_toc: true"
-        ])
-    ]
-
     for parent in index_dict:
         content: List[str] = []
 
         content += [jekyll([
                 "title: {}".format(parent.title()),
                 "permalink: {}".format(parent),
-                "parent: API",
+                "nav_order: 1",
                 "has_children: true",
                 "has_toc: true"
             ])
         ]
-        
-        markdown.append(MarkdownDocument(parent, content))
 
-    markdown.append(MarkdownDocument("index", index_content))
+        markdown.append(MarkdownDocument(parent, content))
 
     return markdown
 
@@ -120,7 +108,6 @@ def _as_markdown(
             "title: {}".format(gdscript.name),
             "permalink: {}".format(gdscript.jekyll_path),
             "parent: {}".format(parent),
-            "grand_parent: API"
         ])]
 
     if output_format == OutputFormats.MARDKOWN:

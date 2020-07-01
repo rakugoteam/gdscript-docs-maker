@@ -1,4 +1,5 @@
-"""Converts the json representation of GDScript classes as dictionaries into objects
+"""
+Converts the json representation of GDScript classes as dictionaries into objects
 """
 import itertools
 import operator
@@ -339,7 +340,7 @@ inclusion, and private methods."""
 
         if name in BUILTIN_VIRTUAL_CALLBACKS:
             continue
-            
+
         if name == TYPE_CONSTRUCTOR and not entry["arguments"]:
             continue
 

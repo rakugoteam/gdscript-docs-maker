@@ -1,5 +1,5 @@
 tool
-extends SceneTree
+extends EditorScript
 var Collector: SceneTree = load("Collector.gd").new()
 # A list of directories to collect files from.
 var directories := [
@@ -22,7 +22,6 @@ var is_recursive: = false
 var patterns := ["*.gd"]
 # Output path to save the class reference.
 var save_path := "res://reference.json"
-
 
 func _run() -> void:
 	var files := PoolStringArray()

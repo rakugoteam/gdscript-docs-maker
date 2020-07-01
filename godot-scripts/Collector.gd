@@ -2,7 +2,6 @@ tool
 extends SceneTree
 # Finds and generates a code reference from gdscript files.
 
-
 # Returns a list of file paths found in the directory.
 #
 # **Arguments**
@@ -15,7 +14,7 @@ extends SceneTree
 # - is_recursive: if `true`, walks over subdirectories recursively, returning all
 #   files in the tree.
 func find_files(
-	dirpath := "", patterns := PoolStringArray(), is_recursive := false, do_skip_hidden := true
+	dirpath := "", patterns := PoolStringArray(), is_recursive := false
 ) -> PoolStringArray:
 	var file_paths := PoolStringArray()
 	var directory := Directory.new()
@@ -28,7 +27,7 @@ func find_files(
 		printerr("Could not open the following dirpath: %s" % dirpath)
 		return file_paths
 
-	directory.list_dir_begin(true, do_skip_hidden)
+	directory.list_dir_begin(true, is_recursive)
 	var file_name := directory.get_next()
 	var subdirectories := PoolStringArray()
 
@@ -41,6 +40,7 @@ func find_files(
 			for pattern in patterns:
 				if file_name.match(pattern):
 					file_paths.append(dirpath.plus_file(file_name))
+
 		file_name = directory.get_next()
 
 	directory.list_dir_end()
@@ -88,9 +88,6 @@ func get_reference(files := PoolStringArray(), refresh_cache := false, path_pref
 	var workspace = Engine.get_singleton('GDScriptLanguageProtocol').get_workspace()
 
 	for file in files:
-		if not file.ends_with(".gd"):
-			continue
-
 		if refresh_cache:
 			workspace.parse_local_script(file)
 
@@ -100,6 +97,9 @@ func get_reference(files := PoolStringArray(), refresh_cache := false, path_pref
 		if symbols["name"] == "":
 			var fixed_name = file.get_file ( ).get_basename ( )
 			symbols["name"] = fixed_name.capitalize ( ).replace(" ", "")
+
+		if symbols["name"] == symbols["jekyll_path"]:
+			 symbols["jekyll_path"] = ""
 
 		data["classes"].append(symbols)
 
