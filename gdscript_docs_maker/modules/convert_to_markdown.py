@@ -51,12 +51,18 @@ def convert_to_markdown(
         _add_index_dict(index_dict, entry, arguments)
 
     for parent in index_dict:
+        if parent in ["main", ""]:
+            continue;
+
         content: List[str] = []
+
+        jp: str = "/" + parent
+        order: int = 2
 
         content += [jekyll([
                 "title: {}".format(parent.title()),
-                "permalink: {}".format(parent),
-                "nav_order: 1",
+                "permalink: {}".format(jp),
+                "nav_order: {}".format(order),
                 "has_children: true",
                 "has_toc: true"
             ])
@@ -66,21 +72,23 @@ def convert_to_markdown(
 
     return markdown
 
-def jekyll_parent(jekyll_path:str) -> str:
-    return jekyll_path.split("/")[1]
-
 def _add_index_dict(index_dict: dict, gdscript: GDScriptClass, arguments):
     output_format: OutputFormats = arguments.format
     if output_format == OutputFormats.JEKYLL and arguments.make_index:
-        parent = jekyll_parent(gdscript.jekyll_path)
-        pair = {parent:[]}
+        paths = gdscript.jekyll_path.split("/")
 
-        if not( parent in index_dict):
-            pair[parent].append({gdscript.name: gdscript.jekyll_path})
-            index_dict.update(pair)
+        for p in paths:
+            if p in ["", paths[-1]]:
+                continue
 
-        else:
-            index_dict[parent].append({gdscript.name: gdscript.jekyll_path})
+            pair = {p:{}}
+
+            if not (p in index_dict):
+                pair[p].update({gdscript.name: gdscript.jekyll_path})
+                index_dict.update(pair)
+
+            else:
+                index_dict[p].update({gdscript.name: gdscript.jekyll_path})
 
 def _as_markdown(
     classes: GDScriptClasses, gdscript: GDScriptClass, arguments: Namespace
@@ -91,12 +99,22 @@ def _as_markdown(
     content: List[str] = []
     output_format: OutputFormats = arguments.format
 
+    if gdscript.name == "Main":
+        gdscript.name = "Rakugo"
+
     name: str = gdscript.name
     if "abstract" in gdscript.metadata.tags:
         name += " " + surround_with_html("(abstract)", "small")
+    
+    paths = gdscript.jekyll_path.split("/")
 
     if output_format == OutputFormats.JEKYLL:
-        parent = jekyll_parent(gdscript.jekyll_path)
+
+        if len(paths) >= 3:
+            parent = paths[-2]
+
+        else:
+            parent = ""
 
         if parent == "gui":
             parent = "GUI"
@@ -104,11 +122,19 @@ def _as_markdown(
         else:
             parent = parent.title()
 
-        content += [jekyll([
-            "title: {}".format(gdscript.name),
-            "permalink: {}".format(gdscript.jekyll_path),
-            "parent: {}".format(parent),
-        ])]
+        if gdscript.name == "Rakugo":
+            content += [jekyll([
+                "title: {}".format(gdscript.name),
+                "permalink: {}".format("/rakugo"),
+                "nav_order: 1",
+            ])]
+
+        else:
+            content += [jekyll([
+                "title: {}".format(gdscript.name),
+                "permalink: {}".format(gdscript.jekyll_path),
+                "parent: {}".format(parent),
+            ])]
 
     if output_format == OutputFormats.MARDKOWN:
         content += [*make_heading(name, 1)]
@@ -199,7 +225,7 @@ def _write_index_page(classes: GDScriptClasses, info: ProjectInfo) -> MarkdownDo
     content: List[str] = [
         *MarkdownSection(title, 1, info.description).as_text(),
         *MarkdownSection("Contents", 2,
-                         _write_table_of_contents(classes)).as_text(),
+                        _write_table_of_contents(classes)).as_text(),
     ]
     return MarkdownDocument("index", content)
 
@@ -260,6 +286,7 @@ def _replace_references(
                         member, class_name) + ERROR_TAIL
                 )
                 continue
+
         elif member and member not in classes.class_index[gdscript.name]:
             LOGGER.warning(
                 ERROR_MESSAGES["member"].format(
@@ -270,13 +297,16 @@ def _replace_references(
         display_text, path = "", ""
         if class_name:
             display_text, path = class_name, class_name
+
         if class_name and member:
             display_text += "."
             path += "/"
+
         if member:
             display_text += member
             path += "#" + member.replace("_", "-")
 
         link: str = make_link(display_text, path)
         description = description.replace(reference, link, 1)
+
     return description
