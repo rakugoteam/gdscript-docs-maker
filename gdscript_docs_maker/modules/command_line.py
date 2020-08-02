@@ -15,7 +15,7 @@ def _validate_output_format(args) -> OutputFormats:
 
     if args == "jekyll":
         format = OutputFormats.JEKYLL
-        
+
     return format
 
 
@@ -58,6 +58,15 @@ def parse(args=sys.argv) -> Namespace:
         action="store_true",
         default=False,
         help="If this flag is present, create an index.md page with a table of contents.",
+    )
+
+    parser.add_argument(
+        "-s",
+        "--skip",
+        type=str,
+        nargs="+",
+        default="",
+        help="use with --make-index, skip files on index",
     )
 
     parser.add_argument(

@@ -99,7 +99,7 @@ func get_reference(files := PoolStringArray(), refresh_cache := false, path_pref
 			symbols["name"] = fixed_name.capitalize ( ).replace(" ", "")
 
 		if symbols["name"] == symbols["jekyll_path"]:
-			 symbols["jekyll_path"] = ""
+			symbols["jekyll_path"] = ""
 
 		data["classes"].append(symbols)
 
